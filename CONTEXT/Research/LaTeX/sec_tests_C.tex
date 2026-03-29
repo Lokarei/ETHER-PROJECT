@@ -1,1 +1,586 @@
+% sec_tests_C.tex
+% Раздел C (Верификация и тесты): норматив, шлюзы, режимы допуска и витрина протокола
+% Актуализировано под рабочий протокол C с QC1 и QC_SCREW_LOCK
+% pdfLaTeX-safe: используем LaTeX-математику, без Unicode-математики в обычном тексте
+%
+% Требует в main.tex:
+% \usepackage{amsmath,amssymb}
+% \usepackage{tikz}
+% \usetikzlibrary{arrows.meta,positioning,shapes.geometric}
+% \usepackage{fancyvrb}
+% \usepackage{hyperref}
 
+\section{Верификация и тесты (C): норматив, шлюзы и условия допуска к интерпретации}
+\label{sec:sec_tests_C}
+
+\subsection{Почему потребовалось ужесточение протокола}
+
+Верификационный контур C был ужесточён по двум независимым причинам.
+
+Во-первых, локально-квазицилиндрическая запись удобна как технический инструмент расчёта, но сама по себе опасна: если использовать её без обязательной парной проверки с глобальной тороидальной постановкой, то можно перепутать \emph{координатный артефакт} с физическим эффектом. Поэтому локальный патч не может служить основанием для вывода без отдельной проверки геометрической инвариантности.
+
+Во-вторых, дискретные шнековые режимы больше нельзя интерпретировать в старом непрерывном $q$-языке. В рабочем интерфейсе B$\to$C физический приоритет перенесён с непрерывного параметра $q$ на дискретную пару
+\[
+(m_A,m_S)
+\]
+и метку режима \texttt{mode\_S}. Параметр \texttt{q\_eff} оставлен только как вспомогательный локальный параметр наклона патча и не может служить самостоятельным основанием для физического вывода.
+
+Именно поэтому в протокол C введены два обязательных шлюза:
+\begin{itemize}
+\item \textbf{QC1} --- защита от координатного артефакта в режиме \texttt{quasi\_cyl};
+\item \textbf{QC\_SCREW\_LOCK} --- защита от произвольной непрерывной геометризации шнека.
+\end{itemize}
+
+Логика секции C строится в следующем порядке:
+\begin{enumerate}
+\item сначала фиксируются канонические запреты;
+\item затем объясняется, почему \texttt{quasi\_cyl} опасен без пары \texttt{torus\_ref/quasi\_cyl\_ref};
+\item затем объясняется, почему шнек нельзя интерпретировать через один \texttt{q\_eff};
+\item далее вводятся QC1 и QC\_SCREW\_LOCK как охрана физического смысла;
+\item только после этого перечисляются режимы, допускаемые к интерпретации.
+\end{enumerate}
+
+\subsection{Канонические запреты и язык наблюдения}
+
+\textbf{(CANON \S16, \S17, норматив)} Прокси-набор $(K,G,A_{ij})$ используется только как
+\emph{измерительный язык} состояния хаотической фазы у $\Sigma$ и \emph{не вводит новых сущностей}.
+В тексте допустимы формулировки \emph{«наблюдаем прокси»} и запрещены формулировки вида
+\emph{«действует поле $G/A$»}, \emph{«тензор $A$ толкает»}, \emph{«$A$ создаёт силу»}.
+
+Рекомендуемая нормировка:
+\[
+K=n\langle v^2\rangle,\qquad
+G=n\langle v\rangle,\qquad
+P_{ij}=n\langle v_i v_j\rangle,\qquad
+A_{ij}=P_{ij}-\frac13\mathrm{tr}(P)\delta_{ij}.
+\]
+На поверхности $\Sigma$ используем нормаль $n(x)$ и проектор на касательную плоскость
+\[
+\Pi_\top(\xi)=\xi-(\xi\cdot n)n.
+\]
+
+КУБК относится к балансу \emph{числа контактов} на $\Sigma$ и не является источником дрейфа.
+Если приращения импульса изотропны, то устойчивый дрейф запрещён:
+\[
+A\equiv 0,\qquad \Pi_\top(G)\equiv 0 \quad \Longrightarrow \quad V=0.
+\]
+Здесь $V=0$ означает \textbf{векторный ноль}, а не только отсутствие продольной компоненты.
+
+\subsection{Охранный тест T2 и нулевой коридор}
+
+\textbf{(CANON \S4.3, \S7, \S17, норматив)} Тест T2 запрещает получать дрейф
+из одной лишь $\lambda$-асимметрии. Если заявлено ``нет внешнего нарушителя'' и
+входные прокси-метрики находятся в нулевом коридоре, то дрейф обязан оставаться нулевым.
+
+Вводим метрики:
+\[
+v_{\mathrm{rms}}=\sqrt{\langle K/n\rangle_\Sigma},\qquad \bar n=\langle n\rangle_\Sigma,
+\]
+\[
+\varepsilon_G=\frac{\|\Pi_\top(G)\|_\Sigma}{\bar n\,v_{\mathrm{rms}}},\qquad
+\varepsilon_A=\frac{\|A\|_\Sigma}{\bar n\,v_{\mathrm{rms}}^2},
+\]
+\[
+\varepsilon_V=\frac{\|V\|}{v_{\mathrm{rms}}},\qquad
+\varepsilon_{V\parallel}=\frac{|V_\parallel|}{v_{\mathrm{rms}}}.
+\]
+
+\textbf{Авто-шлюз T2:}
+если заявлено отсутствие внешнего нарушителя и
+\[
+(\varepsilon_G,\varepsilon_A)\approx 0,
+\]
+то обязано быть
+\[
+\varepsilon_V\approx 0.
+\]
+
+Красный флаг возникает, если $V\neq 0$ при $A\equiv 0$ и $\Pi_\top(G)\equiv 0$:
+в этом случае дрейф фактически ``получен из $\lambda$'' или допущена ошибка постановки.
+
+\subsection{Норматив тестов шнека T5--T6}
+
+\textbf{(CANON \S17, норматив)} Фиксируется ось симметрии объекта $e_\parallel$,
+измеряется продольная компонента дрейфа:
+\[
+V_\parallel = V\cdot e_\parallel .
+\]
+
+Обязательные проверки:
+\[
+V_\parallel(\chi)=-V_\parallel(-\chi),
+\qquad
+V_\parallel(s_{sh}=+1)=-V_\parallel(s_{sh}=-1)
+\]
+при прочих равных.
+
+Для стоячего шнека при отсутствии внешнего нарушителя:
+\[
+\nabla K=0,\quad G=0,\quad A=0,\quad s_{sh}=0
+\quad \Longrightarrow \quad
+V_\parallel\approx 0.
+\]
+
+Метрики парных прогонов:
+\[
+\Delta_\chi=\frac{|V_\parallel(+1)+V_\parallel(-1)|}{v_{\mathrm{rms}}},
+\qquad
+\Delta_s=\frac{|V_\parallel(s_{sh}=+1)+V_\parallel(s_{sh}=-1)|}{v_{\mathrm{rms}}}.
+\]
+
+\subsection{QC1: защита от координатного артефакта \texttt{quasi\_cyl}}
+
+Локальная запись \texttt{quasi\_cyl} допустима только как \emph{временный локальный патч}
+той же канонической геометрии. Она не является новой физической сущностью и не заменяет
+глобальную тороидальную/двуториальную постановку.
+
+Поэтому для каждой канонической ситуации B обязан формировать минимум одну парную связку:
+\begin{itemize}
+\item \texttt{geometry\_mode=global\_torus}, \texttt{pair\_role=torus\_ref};
+\item \texttt{geometry\_mode=quasi\_cyl}, \texttt{pair\_role=quasi\_cyl\_ref}.
+\end{itemize}
+
+При этом обязаны совпадать:
+\begin{itemize}
+\item \texttt{scenario},
+\item \texttt{geometry\_id},
+\item \texttt{pair\_id\_geom},
+\item физические входы,
+\item \texttt{chi},
+\item \texttt{s\_sh},
+\item режим внешнего нарушителя,
+\item настройки допусков,
+\end{itemize}
+и различаться только:
+\begin{itemize}
+\item \texttt{geometry\_mode},
+\item \texttt{pair\_role}.
+\end{itemize}
+
+\textbf{QC1 PASS:}
+\begin{itemize}
+\item охранные запреты T2, N1, N2, N3 не ломаются при переходе к \texttt{quasi\_cyl};
+\item новый дрейф не возникает только из выбора координатного патча;
+\item допустимость/недопустимость D1 совпадает в паре \texttt{torus\_ref/quasi\_cyl\_ref}.
+\end{itemize}
+
+\textbf{QC1 FAIL:}
+\begin{itemize}
+\item запреты нарушаются только в \texttt{quasi\_cyl};
+\item новый эффект есть только в \texttt{quasi\_cyl}, а в \texttt{global\_torus} исчезает.
+\end{itemize}
+
+В этом случае серия маркируется как
+\[
+\texttt{coordinate\_artifact\_suspected},
+\]
+а физическая интерпретация откладывается.
+
+\subsection{QC\_SCREW\_LOCK: защита от произвольной непрерывной геометризации шнека}
+
+В новой рабочей схеме B$\to$C физика шнека читается через дискретную пару
+\[
+(m_A,m_S),
+\]
+где:
+\begin{itemize}
+\item $m_A\in \mathbb{Z}_{>0}$ --- квантовое число канальной навивки;
+\item $m_S\in\{1,2,4\}$ --- базовая шнековая мода;
+\item \texttt{mode\_S} --- метка режима:
+\[
+\texttt{mode\_S}\in\{\texttt{S1},\texttt{S2},\texttt{S4},\texttt{S*}\}.
+\]
+\end{itemize}
+
+Базовые режимы:
+\[
+\texttt{S1},\ \texttt{S2},\ \texttt{S4}.
+\]
+Режим \texttt{S*} допускается только как \emph{производный} режим с явной маркировкой производности.
+
+Дополнительно B обязан передавать:
+\begin{itemize}
+\item \texttt{hA\_definition},
+\item \texttt{hS\_definition},
+\item \texttt{A\_S\_orth\_candidate},
+\item \texttt{q\_eff},
+\item \texttt{mode\_lock\_pass}.
+\end{itemize}
+
+\textbf{Критический смысл:} \texttt{q\_eff} не является главным физическим носителем шнека.
+Он допустим только как вспомогательный локальный параметр патча.
+
+\textbf{QC\_SCREW\_LOCK PASS:}
+\begin{itemize}
+\item серия читается через согласованную пару $(m_A,m_S)$;
+\item базовые режимы принадлежат множеству \texttt{S1/S2/S4};
+\item \texttt{S*} указан как производный режим;
+\item \texttt{h\_A} и \texttt{h\_S} разведены явно;
+\item \texttt{q\_eff} не используется как физическая основа режима;
+\item \texttt{mode\_lock\_pass=true}.
+\end{itemize}
+
+\textbf{QC\_SCREW\_LOCK FAIL:}
+\begin{itemize}
+\item шнековая мода подана как произвольная непрерывная деформация;
+\item связь с $m_A$ отсутствует;
+\item режим вне базы \texttt{S1/S2/S4} заявлен без указания производности;
+\item физическая интерпретация даётся при \texttt{mode\_lock\_pass=false};
+\item \texttt{q\_eff} используется как главный аргумент физического вывода.
+\end{itemize}
+
+\subsection{Базовые моды S1/S2/S4 и условия допуска к интерпретации}
+
+Для каждого нового шнекового сценария C требует:
+\begin{enumerate}
+\item парность \texttt{global\_torus} $\leftrightarrow$ \texttt{quasi\_cyl};
+\item сравнение базовых мод \texttt{S1}, \texttt{S2}, \texttt{S4};
+\item сравнение ``базовая мода $\leftrightarrow$ производная мода'';
+\item сравнение ``согласованная пара $(m_A,m_S)$ $\leftrightarrow$ искусственно рассогласованная пара''.
+\end{enumerate}
+
+Физическая интерпретация шнековой серии допустима только если одновременно:
+\begin{itemize}
+\item \texttt{local\_patch\_valid=true};
+\item \texttt{patch\_valid=true} (если используется патч-язык);
+\item \texttt{QC1\_pass=true};
+\item \texttt{QC\_SCREW\_LOCK\_pass=true};
+\item \texttt{mode\_lock\_pass=true};
+\item пройден T2;
+\item выполнены T5--T6;
+\item пройдены N1--N3;
+\item D1 заявляется только в допустимом режиме.
+\end{itemize}
+
+Если хотя бы одно из условий нарушено, C обязан выставить:
+\[
+\texttt{FAIL\_INTERPRETATION}
+\]
+и/или соответствующий красный флаг.
+
+\subsection{Охранники N1--N3 и режим D1 в новой схеме}
+
+Перед тем, как считать режим D1 физически интерпретируемым, обязательны охранники:
+
+\begin{itemize}
+\item \textbf{N1 (базовая тороидальная ссылка):}
+нет допустимого дискретно-согласованного пространственного режима; локальный tor-вклад и вращение допустимы,
+но интегрально обязано быть
+\[
+V\approx 0.
+\]
+
+\item \textbf{N2 (без tor-моды):}
+\[
+s_{sh}=0 \quad \Longrightarrow \quad
+j_{\mathrm{tor}}^{\mathrm{loc}}=0
+\Longrightarrow
+j_{\mathrm{sp}}^{\mathrm{loc}}=0
+\Longrightarrow
+V=0.
+\]
+
+\item \textbf{N3 (без геометрического рычага):}
+\[
+w_{\mathrm{asym}}\approx 0 \quad \Longrightarrow \quad V\approx 0.
+\]
+\end{itemize}
+
+\textbf{D1 (дискретно-согласованный двуторий со шнеком)} допускается только если:
+\begin{itemize}
+\item предъявлена допустимая пара $(m_A,m_S)$;
+\item \texttt{mode\_S}$\in\{\texttt{S1},\texttt{S2},\texttt{S4}\}$ или явно обоснованная производная \texttt{S*};
+\item $w_{\mathrm{asym}}>0$;
+\item $s_{sh}\neq 0$.
+\end{itemize}
+
+Только здесь допускается
+\[
+V_\parallel\neq 0,
+\]
+но с обязательным выполнением норм CANON \S17:
+\[
+V_\parallel(\chi)=-V_\parallel(-\chi),
+\qquad
+V_\parallel(s_{sh}=+1)=-V_\parallel(s_{sh}=-1).
+\]
+
+\subsection{Почему в витрине должны быть две поточные схемы}
+
+В этой секции намеренно сохраняются \textbf{две} визуальные схемы.
+
+Первая схема --- \emph{историческая}. Она нужна не как действующий норматив, а как
+документированная фиксация прошлого этапа, в котором C строил объяснение через
+непрерывную геометризацию двутория при помощи $q$, $h(x)$ и $w(x)$.
+Эта схема показывает, откуда произошёл ранний язык охранников N1--N3 и D1.
+
+Вторая схема --- \emph{актуальная}. Она нужна как действующий поток проверки в текущем
+рабочем протоколе C, где центральны уже не параметры $q/h(x)$, а:
+\begin{itemize}
+\item \texttt{geometry\_mode},
+\item временный локальный патч,
+\item QC1,
+\item дискретная пара $(m_A,m_S)$,
+\item \texttt{mode\_S},
+\item QC\_SCREW\_LOCK,
+\item и только затем --- физическая интерпретация.
+\end{itemize}
+
+Сохранение обеих схем нужно для честной демонстрации всех шагов эволюции протокола:
+мы не скрываем прежний каркас, но и не выдаём его за действующий.
+
+\subsection{Историческая поточная схема C (ранняя q-центричная витрина)}
+
+\begin{figure}[p]
+\centering
+\resizebox{\textwidth}{0.90\textheight}{%
+\begin{tikzpicture}[
+  font=\normalsize,
+  node distance=9mm and 24mm,
+  box/.style={rectangle, rounded corners=3pt, draw=black!55, thick, align=center,
+              minimum width=0.78\linewidth, inner sep=8pt},
+  sbox/.style={rectangle, rounded corners=3pt, draw=black!55, thick, align=center,
+               minimum width=0.36\linewidth, inner sep=8pt},
+  decision/.style={diamond, aspect=2.25, draw=black!55, thick, align=center,
+                   inner sep=3pt, text width=0.44\linewidth},
+  arr/.style={-Latex, thick, draw=black!70}
+]
+
+\node[box, fill=blue!10] (geom) {%
+$\Sigma$: граничная поверхность, параметризация $X(u,v)$\\
+$n(x)$: нормаль на $\Sigma$,\quad $e_{\parallel}$: ось (CANON \S17),\quad $V_{\parallel}=V\cdot e_{\parallel}$\\
+паспорт: $\chi\in\{-1,+1\}$,\quad $s_{sh}\in\{-1,0,+1\}$ (бег $\rightarrow$/стоячий/бег $\leftarrow$)
+};
+
+\node[box, fill=cyan!10, below=of geom] (geo) {%
+\textbf{Геометризация двутория (B$\to$C, КАНДИДАТ):}\\
+$q\in\mathbb{R}\setminus\{0\}$ (q=0: тонкий тор; q$\neq$0: двуторий),\ \ $w(x)$: вес внешн./внутр. рычага\\
+\texttt{w\_mode $\in$ \{binary, hybrid, ...\}},\quad \texttt{w\_asym} — метрика несимметрии $w(x)$\\
+Норма каркаса: дрейф двутория запрещён без (q$\neq$0 и w\_asym$>$0) и без tor-моды (s\_sh$\neq$0)
+};
+
+\node[box, fill=orange!12, below=of geo] (proxies) {%
+Прокси на $\Sigma$ (CANON \S16):\\
+$K=n\langle v^2\rangle,\quad G=n\langle v\rangle,\quad P_{ij}=n\langle v_i v_j\rangle$\\
+$A_{ij}=P_{ij}-\frac13\mathrm{tr}(P)\delta_{ij},\quad \Pi_{\top}(G)=G-(G\!\cdot\!n)n$\\
+\textbf{Прокси — ярлыки измерения, не сущности и не «поля».}
+};
+
+\node[decision, fill=white, below=of proxies] (dec) {Расчёт $j$ на $\Sigma$};
+
+\node[sbox, fill=violet!12, below left=of dec, yshift=+4mm] (ext) {%
+\textbf{Внешний}\\[2pt]
+$j^{ext}(x)=F_{ext}(K,G,A;\Sigma)$\\
+$\nabla K$ / приходящая ВР\\
+(перекосы статистики на $\Sigma$)
+};
+
+\node[sbox, fill=violet!12, below right=of dec, yshift=+4mm] (intr) {%
+\textbf{Внутренний (tor$\to$sp)}\\[2pt]
+$g_{\top}=\Pi_{\top}(G),\quad a_{\top}=\Pi_{\top}(A n)$\\
+$j_{tor}=\chi\,s_{sh}(\alpha_1\,n\times g_{\top}+\alpha_2\,n\times a_{\top})$\\
+$j_{sp}=\beta(K)\,w(x)\,(j_{tor}\!\cdot\!t_\theta)\,h(x)$\\
+$j_{int}=j_{tor}+j_{sp}$\\
+\textbf{s\_sh=0 $\Rightarrow$ $j_{tor}=j_{sp}=0$}
+};
+
+\node[box, fill=green!12, below=30mm of dec] (sum) {%
+$j(x)=j^{ext}(x)+j^{int}(x)$\\
+локальная импульсная анизотропия контактов на $\Sigma$
+};
+
+\node[box, fill=purple!10, below=of sum] (resp) {%
+Интегральный отклик:\\
+$V=\mu_T\int_{\Sigma} j\,dS,\quad V_{\parallel}=V\cdot e_{\parallel}$\\
+$\Omega=\tilde{\mu}_R\int_{\Sigma}(r-r_0)\times j\,dS$\\
+$J_{int,\parallel}=\Big(\int_{\Sigma} j^{int}\,dS\Big)\cdot e_{\parallel}$
+};
+
+\node[box, fill=yellow!18, below=of resp] (ver) {%
+Верификация / нормы:\\
+$v_{rms}=\sqrt{\langle K/n\rangle_{\Sigma}},\quad \bar n=\langle n\rangle_{\Sigma}$\\
+$\varepsilon_G=\|\Pi_{\top}(G)\|_{\Sigma}/(\bar n\,v_{rms}),\quad
+\varepsilon_A=\|A\|_{\Sigma}/(\bar n\,v_{rms}^2)$\\
+$\varepsilon_V=\|V\|/v_{rms},\quad \varepsilon_{V\parallel}=|V_{\parallel}|/v_{rms}$\\
+\textbf{T2:} $(\varepsilon_G,\varepsilon_A)\approx 0 \Rightarrow \varepsilon_V\approx 0$\\
+\textbf{T5--T6:} $\chi$-нечётность $V_{\parallel}$ и реверс $s_{sh}$; $s_{sh}=0 \Rightarrow V_{\parallel}\approx 0$\\[4pt]
+\textbf{Охранники геометризации (перед D1 обязательно):}\\
+N1: $q=0,\ s_{sh}\neq 0 \Rightarrow \Omega\neq 0$ допустимо, но $V\approx 0$\\
+N2: $q\neq 0,\ s_{sh}=0 \Rightarrow V=0$\\
+N3: $q\neq 0,\ w\_{asym}\approx 0 \Rightarrow V\approx 0$\\
+\textbf{D1:} $q\neq 0,\ w\_{asym}>0,\ s_{sh}\neq 0 \Rightarrow V_{\parallel}\neq 0$ + нормы CANON \S17
+};
+
+\draw[arr] (geom) -- (geo);
+\draw[arr] (geo) -- (proxies);
+\draw[arr] (proxies) -- (dec);
+\draw[arr] (dec) -- (ext);
+\draw[arr] (dec) -- (intr);
+\draw[arr] (ext.south)  -- ++(0,-10mm) |- (sum.west);
+\draw[arr] (intr.south) -- ++(0,-10mm) |- (sum.east);
+\draw[arr] (sum) -- (resp);
+\draw[arr] (resp) -- (ver);
+
+\end{tikzpicture}%
+}
+\caption{Историческая поточная схема (C): ранняя витрина через непрерывную геометризацию двутория $(q,w,h)$ и переход $tor\to sp$. Схема сохраняется как документированная версия прежнего этапа развития протокола.}
+\label{fig:C_flow_tikz_old}
+\end{figure}
+
+\subsection{Актуальная поточная схема C (действующий протокол)}
+
+Новая схема вводится не для косметической замены обозначений, а для изменения самой логики проверки.
+Если историческая схема показывала, как C раньше описывал внутренний механизм через непрерывную геометризацию,
+то актуальная схема показывает, как C теперь проверяет \emph{допустимость физического вывода}.
+
+В новой логике:
+\begin{enumerate}
+\item локальный патч признаётся только временным инструментом расчёта;
+\item затем обязательна геометрическая проверка QC1;
+\item затем обязательна модовая проверка QC\_SCREW\_LOCK;
+\item только после этого допускается интерпретация результата как физического.
+\end{enumerate}
+
+Именно поэтому в новой схеме:
+\begin{itemize}
+\item появился шаг \emph{временного локального патча};
+\item появился явный шлюз \textbf{QC1};
+\item появился явный шлюз \textbf{QC\_SCREW\_LOCK};
+\item параметр $q$ ушёл с роли главного физического носителя шнека;
+\item интерпретация вынесена в последний блок потока.
+\end{itemize}
+
+\begin{figure}[p]
+\centering
+% Новый блок на ТОЧНО ТОМ ЖЕ геометрическом каркасе, что и old:
+% меняется только содержание узлов, а не внешняя компоновка.
+\resizebox{\textwidth}{0.90\textheight}{%
+\begin{tikzpicture}[
+  font=\normalsize,
+  node distance=9mm and 24mm,
+  box/.style={rectangle, rounded corners=3pt, draw=black!55, thick, align=center,
+              minimum width=0.78\linewidth, inner sep=8pt},
+  sbox/.style={rectangle, rounded corners=3pt, draw=black!55, thick, align=center,
+               minimum width=0.36\linewidth, inner sep=8pt},
+  decision/.style={diamond, aspect=2.25, draw=black!55, thick, align=center,
+                   inner sep=3pt, text width=0.44\linewidth},
+  arr/.style={-Latex, thick, draw=black!70}
+]
+
+% --- 1) Геометрия
+\node[box, fill=blue!10] (geom) {%
+$\Sigma$: граничная поверхность, параметризация $X(u,v)$\\
+$n(x)$: нормаль на $\Sigma$,\quad $e_{\parallel}$: ось (CANON \S17),\quad $V_{\parallel}=V\cdot e_{\parallel}$\\
+паспорт: $\chi\in\{-1,+1\}$,\quad $s_{sh}\in\{-1,0,+1\}$,\quad \texttt{geometry\_mode $\in$ \{global\_torus, quasi\_cyl\}}
+};
+
+% --- 2) Временный локальный патч
+\node[box, fill=cyan!10, below=of geom] (geo) {%
+\textbf{Временный локальный патч и геометрический режим}\\
+\texttt{global\_torus}: глобальная тороидальная / двуториальная постановка\\
+\texttt{quasi\_cyl}: только локальный патч записи $\Sigma_{loc}\subset\Sigma$\\
+\texttt{local\_patch\_valid}, \texttt{patch\_valid}, \texttt{curvature\_scale\_ratio}, \texttt{curvature\_ratio}\\
+\textbf{Норма:} \texttt{quasi\_cyl} не является новой физической сущностью
+};
+
+% --- 3) Прокси
+\node[box, fill=orange!12, below=of geo] (proxies) {%
+Прокси на $\Sigma$ (CANON \S16):\\
+$K=n\langle v^2\rangle,\quad G=n\langle v\rangle,\quad P_{ij}=n\langle v_i v_j\rangle$\\
+$A_{ij}=P_{ij}-\frac13\mathrm{tr}(P)\delta_{ij},\quad \Pi_{\top}(G)=G-(G\!\cdot\!n)n$\\
+\textbf{Прокси --- ярлыки измерения, не сущности и не «поля».}
+};
+
+% --- 4) Ромб: QC1
+\node[decision, fill=white, below=of proxies] (dec) {%
+\textbf{QC1}\\
+геометрическая инвариантность\\
+\texttt{torus\_ref} $\leftrightarrow$ \texttt{quasi\_cyl\_ref}
+};
+
+% --- 5) Внешний
+\node[sbox, fill=violet!12, below left=of dec, yshift=+4mm] (ext) {%
+\textbf{Внешний}\\[2pt]
+$j^{ext}(x)=F_{ext}(K,G,A;\Sigma)$\\
+$\nabla K$ / приходящая ВР\\
+внешний перекос статистики на $\Sigma$
+};
+
+% --- 6) Внутренний: новая модовая схема
+\node[sbox, fill=violet!12, below right=of dec, yshift=+4mm] (intr) {%
+\textbf{Внутренний (дискретно-модовый)}\\[2pt]
+$m_A\in\mathbb{Z}_{>0},\quad m_S\in\{1,2,4\}$,\quad \texttt{mode\_S $\in$ \{S1,S2,S4,S*\}}\\
+$h_A=h_A(m_A;x),\quad h_S=h_S(m_S,\chi,s_{sh};x)$\\
+$j_{tor}^{loc}=\chi\,s_{sh}\,\mathcal{T}(m_A;K,g_{\top},a_{\top},n)$\\
+$j_{sp}^{loc}=\beta(K;m_A,m_S)\,w_{loc}(x)\,\Gamma_{A,S}(x)\,h_S(x)$\\
+\textbf{\texttt{q\_eff} --- только вспомогательный параметр патча}
+};
+
+% --- 7) Сумма / модовый шлюз
+\node[box, fill=green!12, below=30mm of dec] (sum) {%
+\textbf{QC\_SCREW\_LOCK и суммарный отклик}\\
+база: \texttt{S1/S2/S4},\quad \texttt{S*} только как производная,\quad \texttt{mode\_lock\_pass=true}\\
+$j(x)=j^{ext}(x)+j^{int}(x)$\\
+локальная импульсная анизотропия контактов на $\Sigma$
+};
+
+% --- 8) Интегральный отклик
+\node[box, fill=purple!10, below=of sum] (resp) {%
+Интегральный отклик:\\
+$V=\mu_T\int_{\Sigma} j\,dS,\quad V_{\parallel}=V\cdot e_{\parallel}$\\
+$\Omega=\tilde{\mu}_R\int_{\Sigma}(r-r_0)\times j\,dS$\\
+$J_{int,\parallel}=\Big(\int_{\Sigma} j^{int}\,dS\Big)\cdot e_{\parallel}$
+};
+
+% --- 9) Нормы/шлюзы + N1–N3 + D1
+\node[box, fill=yellow!18, below=of resp] (ver) {%
+Верификация / нормы:\\
+$v_{rms}=\sqrt{\langle K/n\rangle_{\Sigma}},\quad \bar n=\langle n\rangle_{\Sigma}$\\
+$\varepsilon_G=\|\Pi_{\top}(G)\|_{\Sigma}/(\bar n\,v_{rms}),\quad
+\varepsilon_A=\|A\|_{\Sigma}/(\bar n\,v_{rms}^2)$\\
+$\varepsilon_V=\|V\|/v_{rms},\quad \varepsilon_{V\parallel}=|V_{\parallel}|/v_{rms}$\\
+\textbf{T2:} $(\varepsilon_G,\varepsilon_A)\approx 0 \Rightarrow \varepsilon_V\approx 0$\\
+\textbf{T5--T6:} $\chi$-нечётность $V_{\parallel}$ и реверс $s_{sh}$; $s_{sh}=0 \Rightarrow V_{\parallel}\approx 0$\\[4pt]
+\textbf{Охранники перед D1:}\\
+N1: базовая тороидальная ссылка $\Rightarrow V\approx 0$\\
+N2: $s_{sh}=0 \Rightarrow j_{tor}^{loc}=0 \Rightarrow j_{sp}^{loc}=0 \Rightarrow V=0$\\
+N3: $w\_{asym}\approx 0 \Rightarrow V\approx 0$\\
+\textbf{D1:} допустим только при корректной паре $(m_A,m_S)$ и режиме \texttt{S1/S2/S4} или производной \texttt{S*}
+};
+
+% --- Стрелки
+\draw[arr] (geom) -- (geo);
+\draw[arr] (geo) -- (proxies);
+\draw[arr] (proxies) -- (dec);
+\draw[arr] (dec) -- (ext);
+\draw[arr] (dec) -- (intr);
+
+% Входы в sum по серединам граней (как в old):
+\draw[arr] (ext.south)  -- ++(0,-10mm) |- (sum.west);
+\draw[arr] (intr.south) -- ++(0,-10mm) |- (sum.east);
+
+\draw[arr] (sum) -- (resp);
+\draw[arr] (resp) -- (ver);
+
+\end{tikzpicture}%
+}
+\caption{Актуальная поточная схема (C): сохранён прежний внешний каркас витрины, но внутренняя логика обновлена под режимы \texttt{global\_torus/quasi\_cyl}, геометрический шлюз QC1, дискретно-модовую схему шнека и модовый шлюз QC\_SCREW\_LOCK.}
+\label{fig:C_flow_tikz_new}
+\end{figure}
+
+\FloatBarrier
+
+\subsection{Реестр красных флагов}
+
+\begin{itemize}
+\item дрейф появляется при изотропном фоне без нарушителя;
+\item дрейф ``объясняется'' асимметрией числа контактов, а не анизотропией $\Delta p$;
+\item $\Phi$ интерпретируется как поток СЭ;
+\item $(K,G,A_{ij})$ трактуются как действующие поля/сущности;
+\item \texttt{quasi\_cyl} трактуется как отдельная физическая сущность или глобальная форма ЭВО;
+\item новый эффект существует только в \texttt{quasi\_cyl};
+\item \texttt{q\_eff} используется как главный физический носитель шнека;
+\item режим вне базы \texttt{S1/S2/S4} интерпретируется без явной производности;
+\item физическая интерпретация дана при \texttt{mode\_lock\_pass=false};
+\item D1 заявлен без прохождения N1--N3, QC1 и QC\_SCREW\_LOCK.
+\end{itemize}
