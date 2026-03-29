@@ -1,1 +1,110 @@
+% templates/C_flow_ascii_ru.tex
+% Русский ASCII-поток для отчётов C (pdfLaTeX-safe)
+% Без Unicode-символов Σ/χ/→/⊤/∥: используем "Sigma/chi", "->/<-", "Pi_top", "V_par".
+% Требует в преамбуле: \usepackage{fancyvrb}
 
+\begin{figure}[p]
+\centering
+\thispagestyle{empty}
+
+\fbox{%
+\begin{minipage}{0.97\textwidth}
+\small
+\begin{Verbatim}[fontsize=\footnotesize]
++--------------------------- GEOMETRIYA EVO ----------------------------+
+|  Sigma: granichnaya poverhnost (parametrizaciya X(u,v))               |
+|  n(x): normal' na Sigma                                               |
+|  e_par: prodol'naya os' (kanonicheski iz geometrii; CANON §17)        |
+|  chi in {-1,+1}: pasport hiral'nosti (diskretnyy znak)                |
+|  s_sh in {-1,0,+1}: rezhim shneka (-> / stoyachiy / <-)               |
++--------------------------------+--------------------------------------+
+                                 |
+                                 v
++---------------- DVUTORIY: GEOMETRIZACIYA (B->C, KANDIDAT) ------------+
+|  q in R\{0}: parametr namotki (q=0 -> tonkiy tor; q!=0 -> dvutoriy)   |
+|  w(x): geometricheskiy ves ("vnesh./vnutr. rychag") na Sigma          |
+|  w_mode in {binary, hybrid, ...},  w_asym: metrika nesimmetrii w(x)   |
+|  Norma karkasa: V_space=0 bez (q!=0 i w_asym>0);                      |
+|                pri s_sh=0 (net tor-mody) dreyf zapreshchen.           |
++--------------------------------+--------------------------------------+
+                                 |
+                                 v
++------------------- PROKSI NA Sigma (CANON §16) -----------------------+
+|  K(x)=n <v^2>        G(x)=n <v>        P_ij=n <v_i v_j>              |
+|  A_ij=P_ij-(1/3)tr(P) delta_ij     Pi_top(G)=G-(G·n)n               |
+|  Proksi — IZMERITEL'NYE YARLYKI (ne sushchnosti, ne "polya").         |
+|  Prichinnost': statistika kontaktov / Delta p na Sigma + rezhimy Sigma|
+|  (bez "potoka SE v ob'eme").                                          |
++--------------------------------+--------------------------------------+
+                                 |
+                 +---------------+-----------------+
+                 |                                 |
+                 v                                 v
++-------------------- j_ext (vneshniy narushitel') ---------------------+
+|  j_ext(x)=F_ext(K,G,A; Sigma)                                         |
+|  (grad K / prihodyashchaya VR kak perekos statistiki na Sigma;        |
+|   bez "potoka SE v ob'eme")                                           |
++--------------------------------+--------------------------------------+
+
++-------------------- j_int (vnutrenniy: tor -> sp) --------------------+
+|  g_top := Pi_top(G)                                                   |
+|  a_top := Pi_top(A n)    (gde (A n)_i = A_ij n_j)                     |
+|                                                                        |
+|  j_tor(x)= chi*s_sh( a1 n x g_top + a2 n x a_top )                     |
+|  j_sp(x) = beta(K) w(x) (j_tor · t_theta) h(x)                         |
+|  j_int(x)= j_tor(x) + j_sp(x)                                          |
+|                                                                        |
+|  Garantii: s_sh=0 => j_tor=0 => j_sp=0                                 |
+|           q=0 i/ili w~const => integral'naya kompensaciya => V_space~0 |
+|  B->C logi (obyazatel'no): q,w_mode,w_asym,j_tor_norm,j_sp_norm        |
++--------------------------------+--------------------------------------+
+                                 |
+                                 +--------------------------+
+                                                            |
+                                                            v
++--------------------------- SUMMA NA Sigma ----------------------------+
+|  j(x) = j_ext(x) + j_int(x)                                           |
++--------------------------------+--------------------------------------+
+                                 |
+                                 v
++------------------------ INTEGRAL'NYJ OTKLIK --------------------------+
+|  V     = mu_T * int_Sigma j dS                                        |
+|  V_par = V · e_par                                                     |
+|  Omega = muR_tilde * int_Sigma (r-r0) x j dS                           |
+|  J_int     = int_Sigma j_int dS                                       |
+|  J_int_par = J_int · e_par                                            |
++--------------------------------+--------------------------------------+
+                                 |
+                                 v
++---------------------- SHLYUZY / VERIFIKACIYA -------------------------+
+|  NULEVOY KORIDOR (CANON §17.2):                                       |
+|    v_rms = sqrt(<K/n>_Sigma),  n_bar = <n>_Sigma                      |
+|    eps_G   = ||Pi_top(G)||_Sigma / (n_bar v_rms)                      |
+|    eps_A   = ||A||_Sigma / (n_bar v_rms^2)                            |
+|    eps_V   = ||V||/v_rms,   eps_Vpar = |V_par|/v_rms                  |
+|                                                                        |
+|  Razvedenie norm:                                                      |
+|    - T2: "V=0" — vektornyy nol' -> shlyuz po eps_V                     |
+|    - T5-T6 + stoyachiy: norma po V_par -> shlyuz po eps_Vpar           |
+|    (v oboih sluchayah "net narushitelya" tol'ko pri eps_G, eps_A v nule)|
+|                                                                        |
+|  T2 auto-shlyuz: (eps_G, eps_A ~ 0) => (eps_V ~ 0)                    |
+|                                                                        |
+|  T5-T6 (shnek, §17):                                                   |
+|    (1) chi-nechyotnost': V_par(chi)= -V_par(-chi) (parnyy progon)      |
+|    (2) revers bega:      V_par(->)= -V_par(<-) (parnyy, fiks. chi)     |
+|    (3) stoyachiy: s_sh=0 i "net narushitelya" => V_par ~ 0             |
+|                                                                        |
+|  OKHRANNIKI GEOMETRIZACII (obyazatel'ny pered D1):                     |
+|    N1: q=0, s_sh!=0 -> Omega!=0 dopustimo, no V~0                      |
+|    N2: q!=0, s_sh=0  -> V=0                                            |
+|    N3: q!=0, w_asym~0 -> V~0                                           |
+|  D1: q!=0, w_asym>0, s_sh!=0 -> V_par!=0 + normy §17                  |
++------------------------------------------------------------------------+
+\end{Verbatim}
+\end{minipage}%
+}
+
+\caption{ASCII-potok (RU): Sigma -> (q,w) -> proksi -> j\_ext / j\_int (tor->sp) -> integraly -> shlyuzy (T2,T5--T6) -> okhranniki N1--N3 -> D1.}
+\label{fig:C_flow_ascii_ru}
+\end{figure}
